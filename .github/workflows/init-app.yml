@@ -7,12 +7,6 @@ on:
       projectName:
         description: "Name of the project"
         required: true
-      # theme:
-      #   description: "Choose theme (light or dark)"
-      #   default: "light"
-      # menuTabs:
-      #   description: "Menu tabs separated by commas (e.g., Dashboard,Compras)"
-      #   default: ""
 
 jobs:
   setup-project:
@@ -26,8 +20,7 @@ jobs:
         id: normalize
         run: |
           NORMALIZED_NAME=$(echo "${{ github.event.inputs.projectName }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
-          echo "::set-output name=normalized-name::$NORMALIZED_NAME"
-        # Define a variável como saída para o job
+          echo "normalized-name=$NORMALIZED_NAME" >> $GITHUB_OUTPUT
 
       - name: Create project directory
         run: |
