@@ -12,13 +12,14 @@ inputs:
     description: "Menu tabs separated by commas (e.g., Dashboard,Compras)"
     required: false
     default: ""
+
 runs:
   using: "composite"
   steps:
     - name: Run First Settings Script
       shell: bash
       run: |
-        ./first-settings.sh "${{ inputs.appName }}" "${{ inputs.theme }}" "${{ inputs.menuTabs }}"
+        .github/actions/first-settings/first-settings.sh "${{ inputs.appName }}" "${{ inputs.theme }}" "${{ inputs.menuTabs }}"
     - name: Upload JSON artifact
       uses: actions/upload-artifact@v3
       with:
