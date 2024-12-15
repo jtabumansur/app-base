@@ -18,19 +18,23 @@ jobs:
   setup-project:
     runs-on: ubuntu-latest
 
+    outputs:
+      normalized-name: ${{ steps.normalize.outputs.normalized-name }}
+
     steps:
       - name: Normalize project name
         id: normalize
         run: |
           NORMALIZED_NAME=$(echo "${{ github.event.inputs.projectName }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
-          echo "NORMALIZED_NAME=$NORMALIZED_NAME" >> $GITHUB_ENV
+          echo "::set-output name=normalized-name::$NORMALIZED_NAME"
+        # Define a variável como saída para o job
 
       - name: Create project directory
         run: |
           mkdir -p "$HOME/git"
           echo "Created base directory: $HOME/git"
 
-          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
+          PROJECT_DIR="$HOME/git/${{ steps.normalize.outputs.normalized-name }}"
           mkdir -p "$PROJECT_DIR"
           echo "Project directory created at: $PROJECT_DIR"
 
@@ -41,7 +45,7 @@ jobs:
     steps:
       - name: Set up frontend
         run: |
-          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
+          PROJECT_DIR="$HOME/git/${{ needs.setup-project.outputs.normalized-name }}"
           cd "$PROJECT_DIR"
           npx create-react-app frontend --use-npm --template cra-template
           echo "Frontend setup completed"
@@ -53,7 +57,7 @@ jobs:
     steps:
       - name: Set up backend
         run: |
-          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
+          PROJECT_DIR="$HOME/git/${{ needs.setup-project.outputs.normalized-name }}"
           cd "$PROJECT_DIR"
           mkdir backend
           cd backend
@@ -69,7 +73,7 @@ jobs:
       - name: Create repository on GitHub
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -d "{\"name\": \"$NORMALIZED_NAME\", \"private\": true}" \
+            -d "{\"name\": \"${{ needs.setup-project.outputs.normalized-name }}\", \"private\": true}" \
             https://api.github.com/user/repos
 
   commit-and-push:
@@ -84,11 +88,11 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
+          PROJECT_DIR="$HOME/git/${{ needs.setup-project.outputs.normalized-name }}"
           cd "$PROJECT_DIR"
           git init
           git add .
           git commit -m "Initialize project: ${{ github.event.inputs.projectName }}"
           git branch -M main
-          git remote add origin https://github.com/$USERNAME/$NORMALIZED_NAME.git
+          git remote add origin https://github.com/$USERNAME/${{ needs.setup-project.outputs.normalized-name }}.git
           git push -u origin main
