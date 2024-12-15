@@ -12,11 +12,10 @@ jobs:
   setup-project:
     runs-on: ubuntu-latest
 
-    outputs:
-      normalized-name: ${{ steps.normalize.outputs.normalized-name }}
-
     steps:
       - name: Normalize project name
+        outputs:
+          normalized-name: ${{ steps.normalize.outputs.normalized-name }}
         id: normalize
         run: |
           NORMALIZED_NAME=$(echo "${{ github.event.inputs.projectName }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
