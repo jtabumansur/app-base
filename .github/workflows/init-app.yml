@@ -25,6 +25,12 @@ jobs:
           NORMALIZED_NAME=$(echo "${{ github.event.inputs.projectName }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
           echo "NORMALIZED_NAME=$NORMALIZED_NAME" >> $GITHUB_ENV
 
+      - name: Get GitHub username
+        id: get-username
+        run: |
+          USERNAME=$(curl -s -H "Authorization: token ${{ secrets.GH_TOKEN }}" https://api.github.com/user | jq -r .login)
+          echo "USERNAME=$USERNAME" >> $GITHUB_ENV
+
       - name: Create project directory
         run: |
           PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
@@ -40,9 +46,7 @@ jobs:
         run: |
           PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
           cd "$PROJECT_DIR"
-          npx create-react-app frontend
-          cd frontend
-          npm install axios react-router-dom react-toastify
+          npx create-react-app frontend --use-npm --template cra-template
           echo "Frontend setup completed"
 
   setup-backend:
@@ -57,7 +61,37 @@ jobs:
           mkdir backend
           cd backend
           npm init -y
-          npm install express cors jsonwebtoken dotenv bcryptjs multer mongoose
-          npm install -D nodemon
           echo '{"scripts": {"dev": "nodemon server.js"}}' > package.json
           echo "Backend setup completed"
+
+  create-repo:
+    needs: setup-backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Create repository on GitHub
+        run: |
+          curl -X POST -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
+            -d "{\"name\": \"$NORMALIZED_NAME\", \"private\": true}" \
+            https://api.github.com/user/repos
+
+  commit-and-push:
+    needs: create-repo
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Commit and push project
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
+          cd "$PROJECT_DIR"
+          git init
+          git add .
+          git commit -m "Initialize project: ${{ github.event.inputs.projectName }}"
+          git branch -M main
+          git remote add origin https://github.com/$USERNAME/$NORMALIZED_NAME.git
+          git push -u origin main
