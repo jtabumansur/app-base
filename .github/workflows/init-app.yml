@@ -19,9 +19,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Normalize project name
+        id: normalize
+        run: |
+          NORMALIZED_NAME=$(echo "${{ github.event.inputs.projectName }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
+          echo "NORMALIZED_NAME=$NORMALIZED_NAME" >> $GITHUB_ENV
+
       - name: Create project directory
         run: |
-          PROJECT_DIR="$HOME/git/${{ github.event.inputs.projectName }}"
+          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
           mkdir -p "$PROJECT_DIR"
           echo "Project directory created at: $PROJECT_DIR"
 
@@ -32,7 +38,7 @@ jobs:
     steps:
       - name: Set up frontend
         run: |
-          PROJECT_DIR="$HOME/git/${{ github.event.inputs.projectName }}"
+          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
           cd "$PROJECT_DIR"
           npx create-react-app frontend
           cd frontend
@@ -46,7 +52,7 @@ jobs:
     steps:
       - name: Set up backend
         run: |
-          PROJECT_DIR="$HOME/git/${{ github.event.inputs.projectName }}"
+          PROJECT_DIR="$HOME/git/$NORMALIZED_NAME"
           cd "$PROJECT_DIR"
           mkdir backend
           cd backend
