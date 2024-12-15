@@ -12,10 +12,11 @@ jobs:
   setup-project:
     runs-on: ubuntu-latest
 
+    outputs:
+      FOLDER_NAME: ${{ steps.normalize.outputs.normalized-name }}
+
     steps:
       - name: Normalize project name
-        outputs:
-          normalized-name: ${{ steps.normalize.outputs.normalized-name }}
         id: normalize
         run: |
           NORMALIZED_NAME=$(echo "${{ github.event.inputs.projectName }}" | tr '[:upper:]' '[:lower:]' | sed 's/ /_/g')
@@ -33,11 +34,13 @@ jobs:
   setup-frontend:
     needs: setup-project
     runs-on: ubuntu-latest
+    env:
+      FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
       - name: Set up frontend
         run: |
-          PROJECT_DIR="$HOME/git/${{ needs.setup-project.outputs.normalized-name }}"
+          PROJECT_DIR="$HOME/git/$FOLDER_NAME"
           cd "$PROJECT_DIR"
           npx create-react-app frontend --use-npm --template cra-template
           echo "Frontend setup completed"
@@ -45,11 +48,13 @@ jobs:
   setup-backend:
     needs: setup-frontend
     runs-on: ubuntu-latest
+    env:
+      FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
       - name: Set up backend
         run: |
-          PROJECT_DIR="$HOME/git/${{ needs.setup-project.outputs.normalized-name }}"
+          PROJECT_DIR="$HOME/git/$FOLDER_NAME"
           cd "$PROJECT_DIR"
           mkdir backend
           cd backend
@@ -60,17 +65,21 @@ jobs:
   create-repo:
     needs: setup-backend
     runs-on: ubuntu-latest
+    env:
+      FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
       - name: Create repository on GitHub
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -d "{\"name\": \"${{ needs.setup-project.outputs.normalized-name }}\", \"private\": true}" \
+            -d "{\"name\": \"$FOLDER_NAME\", \"private\": true}" \
             https://api.github.com/user/repos
 
   commit-and-push:
     needs: create-repo
     runs-on: ubuntu-latest
+    env:
+      FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
       - name: Checkout code
@@ -80,11 +89,11 @@ jobs:
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
-          PROJECT_DIR="$HOME/git/${{ needs.setup-project.outputs.normalized-name }}"
+          PROJECT_DIR="$HOME/git/$FOLDER_NAME"
           cd "$PROJECT_DIR"
           git init
           git add .
           git commit -m "Initialize project: ${{ github.event.inputs.projectName }}"
           git branch -M main
-          git remote add origin https://github.com/$USERNAME/${{ needs.setup-project.outputs.normalized-name }}.git
+          git remote add origin https://github.com/$USERNAME/$FOLDER_NAME.git
           git push -u origin main
