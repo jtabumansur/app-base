@@ -8,7 +8,7 @@ on:
         required: true
         default: "My Application"
       theme:
-        description: "Select theme (light or dark)"
+        description: "Choose theme (light or dark)"
         required: true
         default: "light"
 
@@ -20,62 +20,51 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate JSON configuration
+      - name: Generate JSON with theme
         run: |
-          echo "Generating configuration for application: ${{ github.event.inputs.appName }} with ${{ github.event.inputs.theme }} theme."
-
-          if [ "${{ github.event.inputs.theme }}" == "dark" ]; then
-            cat > app-config.json <<EOF
-{
-  "companyName": "${{ github.event.inputs.appName }}",
-  "maxWidth": "70rem",
-  "headerCompanyNameDisplay": "none",
-  "headerLogoHeight": "6.5rem",
-  "hoverFontSize": "1rem",
-  "borderStyle": "dashed",
-  "colors": {
-    "primary": "#FFA500",
-    "secondary": "#F97700",
-    "accent": "#fbe36a",
-    "textLight": "#ffffff",
-    "textDark": "#000000",
-    "backgroundDark": "#252525",
-    "moduleBackground": "rgba(68, 68, 68, 0.6)"
-  },
-  "menuItems": [
-    { "label": "Home", "link": "/" }
-  ]
-}
-EOF
+          # Define color schemes based on the selected theme
+          if [[ "${{ github.event.inputs.theme }}" == "dark" ]]; then
+            primary="#FFA500"
+            secondary="#F97700"
+            accent="#fbe36a"
+            textLight="#ffffff"
+            textDark="#000000"
+            backgroundDark="#252525"
+            moduleBackground="rgba(68, 68, 68, 0.6)"
           else
-            cat > app-config.json <<EOF
-{
-  "companyName": "${{ github.event.inputs.appName }}",
-  "maxWidth": "70rem",
-  "headerCompanyNameDisplay": "block",
-  "headerLogoHeight": "6.5rem",
-  "hoverFontSize": "1rem",
-  "borderStyle": "solid",
-  "colors": {
-    "primary": "#1976d2",
-    "secondary": "#2196f3",
-    "accent": "#82b1ff",
-    "textLight": "#000000",
-    "textDark": "#ffffff",
-    "backgroundDark": "#ffffff",
-    "moduleBackground": "rgba(255, 255, 255, 0.8)"
-  },
-  "menuItems": [
-    { "label": "Home", "link": "/" }
-  ]
-}
-EOF
+            primary="#007BFF"
+            secondary="#0056b3"
+            accent="#33ccff"
+            textLight="#000000"
+            textDark="#ffffff"
+            backgroundDark="#f8f9fa"
+            moduleBackground="rgba(255, 255, 255, 0.8)"
           fi
 
-      - name: Display Generated JSON
-        run: cat app-config.json
+          # Generate the JSON configuration
+          echo "{
+            \"companyName\": \"${{ github.event.inputs.appName }}\",
+            \"maxWidth\": \"70rem\",
+            \"headerCompanyNameDisplay\": \"none\",
+            \"headerLogoHeight\": \"6.5rem\",
+            \"hoverFontSize\": \"1rem\",
+            \"borderStyle\": \"dashed\",
+            \"colors\": {
+              \"primary\": \"$primary\",
+              \"secondary\": \"$secondary\",
+              \"accent\": \"$accent\",
+              \"textLight\": \"$textLight\",
+              \"textDark\": \"$textDark\",
+              \"backgroundDark\": \"$backgroundDark\",
+              \"moduleBackground\": \"$moduleBackground\"
+            },
+            \"menuItems\": [
+              { \"label\": \"Home\", \"link\": \"/\" }
+            ]
+          }" > app-config.json
 
-      - name: Use configuration (optional)
-        run: |
-          # Here you can use the 'app-config.json' file in your build or deployment process
-          echo "Configuration is ready for use."
+          echo "JSON configuration generated successfully:"
+          cat app-config.json
+
+      - name: Show generated JSON
+        run: cat app-config.json
