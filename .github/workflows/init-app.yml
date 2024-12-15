@@ -1,0 +1,93 @@
+name: Deploy MERN App
+
+on:
+  workflow_dispatch:
+    inputs:
+      appName:
+        description: "Application name"
+        required: true
+      headerCompanyNameDisplay:
+        description: "Display the company name in the header (none)"
+        required: false
+        default: "inline"
+      headerLogoHeight:
+        description: "Logo height in the header"
+        required: false
+        default: "4rem"
+      hoverFontSize:
+        description: "Font size on hover"
+        required: false
+        default: "1rem"
+      borderStyle:
+        description: "Border style"
+        required: false
+        default: "dashed"
+      primaryColor:
+        description: "Primary color"
+        required: false
+        default: "#FFA500"
+      secondaryColor:
+        description: "Secondary color"
+        required: false
+        default: "#F97700"
+      accentColor:
+        description: "Accent color"
+        required: false
+        default: "#fbe36a"
+      textLightColor:
+        description: "Light text color"
+        required: false
+        default: "#ffffff"
+      textDarkColor:
+        description: "Dark text color"
+        required: false
+        default: "#000000"
+      backgroundDarkColor:
+        description: "Dark background color"
+        required: false
+        default: "#252525"
+      moduleBackgroundColor:
+        description: "Module background color"
+        required: false
+        default: "rgba(68, 68, 68, 0.6)"
+
+jobs:
+  configure-json:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure JSON
+        run: |
+          echo "{
+            \"companyName\": \"${{ github.event.inputs.appName }}\",
+            \"maxWidth\": \"70rem\",
+            \"headerCompanyNameDisplay\": \"${{ github.event.inputs.headerCompanyNameDisplay }}\",
+            \"headerLogoHeight\": \"${{ github.event.inputs.headerLogoHeight }}\",
+            \"hoverFontSize\": \"${{ github.event.inputs.hoverFontSize }}\",
+            \"borderStyle\": \"${{ github.event.inputs.borderStyle }}\",
+            \"colors\": {
+              \"primary\": \"${{ github.event.inputs.primaryColor }}\",
+              \"secondary\": \"${{ github.event.inputs.secondaryColor }}\",
+              \"accent\": \"${{ github.event.inputs.accentColor }}\",
+              \"textLight\": \"${{ github.event.inputs.textLightColor }}\",
+              \"textDark\": \"${{ github.event.inputs.textDarkColor }}\",
+              \"backgroundDark\": \"${{ github.event.inputs.backgroundDarkColor }}\",
+              \"moduleBackground\": \"${{ github.event.inputs.moduleBackgroundColor }}\"
+            },
+            \"menuItems\": [
+              { \"label\": \"Home\", \"link\": \"/\" }
+            ]
+          }" > app-config.json
+          echo "JSON configured and saved as 'app-config.json'."
+
+      - name: Show generated JSON
+        run: cat app-config.json
+
+      - name: Example integration (optional)
+        run: |
+          # Use the JSON file for integration with the MERN stack app
+          echo "Integration with MERN stack not yet implemented."
+
