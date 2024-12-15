@@ -31,7 +31,14 @@ jobs:
           mkdir -p "$PROJECT_DIR"
           echo "Project directory created at: $PROJECT_DIR"
 
-      - name: Save project directory as artifact
+      - name: Verify and save project directory
+        run: |
+          PROJECT_DIR="$HOME/git/${{ steps.normalize.outputs.normalized-name }}"
+          if [ ! -d "$PROJECT_DIR" ]; then
+            echo "Error: Directory $PROJECT_DIR was not created."
+            exit 1
+          fi
+        # Faz upload do artifact
         uses: actions/upload-artifact@v3
         with:
           name: project-dir
@@ -49,10 +56,16 @@ jobs:
         with:
           name: project-dir
 
+      - name: Move project directory
+        run: |
+          PROJECT_DIR="$HOME/git/$FOLDER_NAME"
+          mkdir -p "$HOME/git"
+          mv $FOLDER_NAME "$PROJECT_DIR"
+          echo "Project directory moved to: $PROJECT_DIR"
+
       - name: Set up frontend
         run: |
           PROJECT_DIR="$HOME/git/$FOLDER_NAME"
-          mv $FOLDER_NAME "$PROJECT_DIR"
           cd "$PROJECT_DIR"
           npx create-react-app frontend --use-npm --template cra-template
           echo "Frontend setup completed"
@@ -75,10 +88,16 @@ jobs:
         with:
           name: project-dir
 
+      - name: Move project directory
+        run: |
+          PROJECT_DIR="$HOME/git/$FOLDER_NAME"
+          mkdir -p "$HOME/git"
+          mv $FOLDER_NAME "$PROJECT_DIR"
+          echo "Project directory moved to: $PROJECT_DIR"
+
       - name: Set up backend
         run: |
           PROJECT_DIR="$HOME/git/$FOLDER_NAME"
-          mv $FOLDER_NAME "$PROJECT_DIR"
           cd "$PROJECT_DIR"
           mkdir backend
           cd backend
@@ -91,35 +110,3 @@ jobs:
         with:
           name: project-dir
           path: $HOME/git/$FOLDER_NAME
-
-  create-repo:
-    needs: setup-backend
-    runs-on: ubuntu-latest
-    env:
-      FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
-
-    steps:
-      - name: Download project directory
-        uses: actions/download-artifact@v3
-        with:
-          name: project-dir
-
-      - name: Create repository on GitHub
-        run: |
-          curl -X POST -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
-            -d "{\"name\": \"$FOLDER_NAME\", \"private\": true}" \
-            https://api.github.com/user/repos
-
-      - name: Commit and push project
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          PROJECT_DIR="$HOME/git/$FOLDER_NAME"
-          mv $FOLDER_NAME "$PROJECT_DIR"
-          cd "$PROJECT_DIR"
-          git init
-          git add .
-          git commit -m "Initialize project: ${{ github.event.inputs.projectName }}"
-          git branch -M main
-          git remote add origin https://github.com/$USERNAME/$FOLDER_NAME.git
-          git push -u origin main
