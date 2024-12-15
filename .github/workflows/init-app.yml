@@ -6,50 +6,11 @@ on:
       appName:
         description: "Application name"
         required: true
-      headerCompanyNameDisplay:
-        description: "Display the company name in the header (none)"
-        required: false
-        default: "inline"
-      headerLogoHeight:
-        description: "Logo height in the header"
-        required: false
-        default: "4rem"
-      hoverFontSize:
-        description: "Font size on hover"
-        required: false
-        default: "1rem"
-      borderStyle:
-        description: "Border style"
-        required: false
-        default: "dashed"
-      primaryColor:
-        description: "Primary color"
-        required: false
-        default: "#FFA500"
-      secondaryColor:
-        description: "Secondary color"
-        required: false
-        default: "#F97700"
-      accentColor:
-        description: "Accent color"
-        required: false
-        default: "#fbe36a"
-      textLightColor:
-        description: "Light text color"
-        required: false
-        default: "#ffffff"
-      textDarkColor:
-        description: "Dark text color"
-        required: false
-        default: "#000000"
-      backgroundDarkColor:
-        description: "Dark background color"
-        required: false
-        default: "#252525"
-      moduleBackgroundColor:
-        description: "Module background color"
-        required: false
-        default: "rgba(68, 68, 68, 0.6)"
+        default: "My Application"
+      theme:
+        description: "Select theme (light or dark)"
+        required: true
+        default: "light"
 
 jobs:
   configure-json:
@@ -59,35 +20,62 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Configure JSON
+      - name: Generate JSON configuration
         run: |
-          echo "{
-            \"companyName\": \"${{ github.event.inputs.appName }}\",
-            \"maxWidth\": \"70rem\",
-            \"headerCompanyNameDisplay\": \"${{ github.event.inputs.headerCompanyNameDisplay }}\",
-            \"headerLogoHeight\": \"${{ github.event.inputs.headerLogoHeight }}\",
-            \"hoverFontSize\": \"${{ github.event.inputs.hoverFontSize }}\",
-            \"borderStyle\": \"${{ github.event.inputs.borderStyle }}\",
-            \"colors\": {
-              \"primary\": \"${{ github.event.inputs.primaryColor }}\",
-              \"secondary\": \"${{ github.event.inputs.secondaryColor }}\",
-              \"accent\": \"${{ github.event.inputs.accentColor }}\",
-              \"textLight\": \"${{ github.event.inputs.textLightColor }}\",
-              \"textDark\": \"${{ github.event.inputs.textDarkColor }}\",
-              \"backgroundDark\": \"${{ github.event.inputs.backgroundDarkColor }}\",
-              \"moduleBackground\": \"${{ github.event.inputs.moduleBackgroundColor }}\"
-            },
-            \"menuItems\": [
-              { \"label\": \"Home\", \"link\": \"/\" }
-            ]
-          }" > app-config.json
-          echo "JSON configured and saved as 'app-config.json'."
+          echo "Generating configuration for application: ${{ github.event.inputs.appName }} with ${{ github.event.inputs.theme }} theme."
 
-      - name: Show generated JSON
+          if [ "${{ github.event.inputs.theme }}" == "dark" ]; then
+            cat > app-config.json <<EOF
+{
+  "companyName": "${{ github.event.inputs.appName }}",
+  "maxWidth": "70rem",
+  "headerCompanyNameDisplay": "none",
+  "headerLogoHeight": "6.5rem",
+  "hoverFontSize": "1rem",
+  "borderStyle": "dashed",
+  "colors": {
+    "primary": "#FFA500",
+    "secondary": "#F97700",
+    "accent": "#fbe36a",
+    "textLight": "#ffffff",
+    "textDark": "#000000",
+    "backgroundDark": "#252525",
+    "moduleBackground": "rgba(68, 68, 68, 0.6)"
+  },
+  "menuItems": [
+    { "label": "Home", "link": "/" }
+  ]
+}
+EOF
+          else
+            cat > app-config.json <<EOF
+{
+  "companyName": "${{ github.event.inputs.appName }}",
+  "maxWidth": "70rem",
+  "headerCompanyNameDisplay": "block",
+  "headerLogoHeight": "6.5rem",
+  "hoverFontSize": "1rem",
+  "borderStyle": "solid",
+  "colors": {
+    "primary": "#1976d2",
+    "secondary": "#2196f3",
+    "accent": "#82b1ff",
+    "textLight": "#000000",
+    "textDark": "#ffffff",
+    "backgroundDark": "#ffffff",
+    "moduleBackground": "rgba(255, 255, 255, 0.8)"
+  },
+  "menuItems": [
+    { "label": "Home", "link": "/" }
+  ]
+}
+EOF
+          fi
+
+      - name: Display Generated JSON
         run: cat app-config.json
 
-      - name: Example integration (optional)
+      - name: Use configuration (optional)
         run: |
-          # Use the JSON file for integration with the MERN stack app
-          echo "Integration with MERN stack not yet implemented."
-
+          # Here you can use the 'app-config.json' file in your build or deployment process
+          echo "Configuration is ready for use."
