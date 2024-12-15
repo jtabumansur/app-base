@@ -31,6 +31,12 @@ jobs:
           mkdir -p "$PROJECT_DIR"
           echo "Project directory created at: $PROJECT_DIR"
 
+      - name: Save project directory as artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: project-dir
+          path: $HOME/git/${{ steps.normalize.outputs.normalized-name }}
+
   setup-frontend:
     needs: setup-project
     runs-on: ubuntu-latest
@@ -38,12 +44,24 @@ jobs:
       FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
+      - name: Download project directory
+        uses: actions/download-artifact@v3
+        with:
+          name: project-dir
+
       - name: Set up frontend
         run: |
           PROJECT_DIR="$HOME/git/$FOLDER_NAME"
+          mv $FOLDER_NAME "$PROJECT_DIR"
           cd "$PROJECT_DIR"
           npx create-react-app frontend --use-npm --template cra-template
           echo "Frontend setup completed"
+
+      - name: Upload updated project directory
+        uses: actions/upload-artifact@v3
+        with:
+          name: project-dir
+          path: $HOME/git/$FOLDER_NAME
 
   setup-backend:
     needs: setup-frontend
@@ -52,15 +70,27 @@ jobs:
       FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
+      - name: Download project directory
+        uses: actions/download-artifact@v3
+        with:
+          name: project-dir
+
       - name: Set up backend
         run: |
           PROJECT_DIR="$HOME/git/$FOLDER_NAME"
+          mv $FOLDER_NAME "$PROJECT_DIR"
           cd "$PROJECT_DIR"
           mkdir backend
           cd backend
           npm init -y
           echo '{"scripts": {"dev": "nodemon server.js"}}' > package.json
           echo "Backend setup completed"
+
+      - name: Upload updated project directory
+        uses: actions/upload-artifact@v3
+        with:
+          name: project-dir
+          path: $HOME/git/$FOLDER_NAME
 
   create-repo:
     needs: setup-backend
@@ -69,27 +99,23 @@ jobs:
       FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
 
     steps:
+      - name: Download project directory
+        uses: actions/download-artifact@v3
+        with:
+          name: project-dir
+
       - name: Create repository on GitHub
         run: |
           curl -X POST -H "Authorization: token ${{ secrets.GH_TOKEN }}" \
             -d "{\"name\": \"$FOLDER_NAME\", \"private\": true}" \
             https://api.github.com/user/repos
 
-  commit-and-push:
-    needs: create-repo
-    runs-on: ubuntu-latest
-    env:
-      FOLDER_NAME: ${{ needs.setup-project.outputs.FOLDER_NAME }}
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Commit and push project
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           PROJECT_DIR="$HOME/git/$FOLDER_NAME"
+          mv $FOLDER_NAME "$PROJECT_DIR"
           cd "$PROJECT_DIR"
           git init
           git add .
