@@ -1,70 +1,36 @@
-name: Deploy MERN App
-
+---
 on:
   workflow_dispatch:
     inputs:
       appName:
         description: "Application name"
         required: true
-        default: "My Application"
       theme:
         description: "Choose theme (light or dark)"
-        required: true
         default: "light"
+      menuTabs:
+        description: "Menu tabs separated by commas (e.g., Dashboard,Compras)"
+        default: ""
 
 jobs:
-  configure-json:
+  generate-json:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Generate JSON with theme
-        run: |
-          # Define color schemes based on the selected theme
-          if [[ "${{ github.event.inputs.theme }}" == "dark" ]]; then
-            primary="#FFA500"
-            secondary="#F97700"
-            accent="#fbe36a"
-            textLight="#ffffff"
-            textDark="#000000"
-            backgroundDark="#252525"
-            moduleBackground="rgba(68, 68, 68, 0.6)"
-          else
-            primary="#007BFF"
-            secondary="#0056b3"
-            accent="#33ccff"
-            textLight="#000000"
-            textDark="#ffffff"
-            backgroundDark="#f8f9fa"
-            moduleBackground="rgba(255, 255, 255, 0.8)"
-          fi
+      - name: Generate Palette JSON
+        uses: ./.github/actions/generate-palette
+        with:
+          appName: ${{ github.event.inputs.appName }}
+          theme: ${{ github.event.inputs.theme }}
+          menuTabs: ${{ github.event.inputs.menuTabs }}
 
-          # Generate the JSON configuration
-          echo "{
-            \"companyName\": \"${{ github.event.inputs.appName }}\",
-            \"maxWidth\": \"70rem\",
-            \"headerCompanyNameDisplay\": \"none\",
-            \"headerLogoHeight\": \"6.5rem\",
-            \"hoverFontSize\": \"1rem\",
-            \"borderStyle\": \"dashed\",
-            \"colors\": {
-              \"primary\": \"$primary\",
-              \"secondary\": \"$secondary\",
-              \"accent\": \"$accent\",
-              \"textLight\": \"$textLight\",
-              \"textDark\": \"$textDark\",
-              \"backgroundDark\": \"$backgroundDark\",
-              \"moduleBackground\": \"$moduleBackground\"
-            },
-            \"menuItems\": [
-              { \"label\": \"Home\", \"link\": \"/\" }
-            ]
-          }" > app-config.json
+      - name: Download JSON artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: palette-json
 
-          echo "JSON configuration generated successfully:"
-          cat app-config.json
-
-      - name: Show generated JSON
-        run: cat app-config.json
+      - name: Show JSON
+        run: cat palette.json

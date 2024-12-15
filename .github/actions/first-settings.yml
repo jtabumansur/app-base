@@ -1,0 +1,29 @@
+name: First settings
+description: Generate a JSON configuration based on the application name, theme, and menu tabs
+inputs:
+  appName:
+    description: "Application name"
+    required: true
+  theme:
+    description: "Choose theme (light or dark)"
+    required: true
+    default: "light"
+  menuTabs:
+    description: "Menu tabs separated by commas (e.g., Dashboard,Compras)"
+    required: false
+    default: ""
+outputs:
+  artifact-path:
+    description: "Path to the generated JSON artifact"
+runs:
+  using: "composite"
+  steps:
+    - name: Run Generate Palette Script
+      shell: bash
+      run: |
+        ./generate-palette.sh "${{ inputs.appName }}" "${{ inputs.theme }}" "${{ inputs.menuTabs }}"
+    - name: Upload JSON artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: palette-json
+        path: palette.json
