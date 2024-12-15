@@ -1,36 +1,57 @@
 ---
+name: Project Initialization Pipeline
+
 on:
   workflow_dispatch:
     inputs:
-      appName:
-        description: "Application name"
+      projectName:
+        description: "Name of the project"
         required: true
-      theme:
-        description: "Choose theme (light or dark)"
-        default: "light"
-      menuTabs:
-        description: "Menu tabs separated by commas (e.g., Dashboard,Compras)"
-        default: ""
+      # theme:
+      #   description: "Choose theme (light or dark)"
+      #   default: "light"
+      # menuTabs:
+      #   description: "Menu tabs separated by commas (e.g., Dashboard,Compras)"
+      #   default: ""
 
 jobs:
-  generate-json:
+  setup-project:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - name: Create project directory
+        run: |
+          PROJECT_DIR="$HOME/git/${{ github.event.inputs.projectName }}"
+          mkdir -p "$PROJECT_DIR"
+          echo "Project directory created at: $PROJECT_DIR"
 
-      - name: Generate First Settings JSON
-        uses: ./.github/actions/first-settings
-        with:
-          appName: ${{ github.event.inputs.appName }}
-          theme: ${{ github.event.inputs.theme }}
-          menuTabs: ${{ github.event.inputs.menuTabs }}
+  setup-frontend:
+    needs: setup-project
+    runs-on: ubuntu-latest
 
-      - name: Download JSON artifact
-        uses: actions/download-artifact@v3
-        with:
-          name: settings-json
+    steps:
+      - name: Set up frontend
+        run: |
+          PROJECT_DIR="$HOME/git/${{ github.event.inputs.projectName }}"
+          cd "$PROJECT_DIR"
+          npx create-react-app frontend
+          cd frontend
+          npm install axios react-router-dom react-toastify
+          echo "Frontend setup completed"
 
-      - name: Show JSON
-        run: cat settings.json
+  setup-backend:
+    needs: setup-frontend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up backend
+        run: |
+          PROJECT_DIR="$HOME/git/${{ github.event.inputs.projectName }}"
+          cd "$PROJECT_DIR"
+          mkdir backend
+          cd backend
+          npm init -y
+          npm install express cors jsonwebtoken dotenv bcryptjs multer mongoose
+          npm install -D nodemon
+          echo '{"scripts": {"dev": "nodemon server.js"}}' > package.json
+          echo "Backend setup completed"
