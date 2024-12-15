@@ -59,3 +59,5 @@ EOF
 
 echo "Generated settings.json:"
 cat settings.json
+pwd
+ls -l settings.json
