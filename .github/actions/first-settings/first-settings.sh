@@ -4,7 +4,7 @@ APP_NAME=$1
 THEME=$2
 MENU_TABS=$3
 
-# Define color schemes based on the theme
+# Definir as cores com base no tema
 if [[ "$THEME" == "dark" ]]; then
   PRIMARY="#FFA500"
   SECONDARY="#F97700"
@@ -23,22 +23,20 @@ else
   MODULE_BACKGROUND="rgba(255, 255, 255, 0.8)"
 fi
 
-# Start building the menuItems array
+# Construir os itens do menu
 MENU_ITEMS='[
   { "label": "Home", "link": "/" }'
 
-# Add custom menu tabs if provided
 IFS=',' read -r -a TABS <<< "$MENU_TABS"
 for TAB in "${TABS[@]}"; do
   LINK=$(echo "$TAB" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
   MENU_ITEMS+=', { "label": "'"$TAB"'", "link": "/'"$LINK"'" }'
 done
 
-# Close the menuItems array
 MENU_ITEMS+=']'
 
-# Generate the JSON configuration
-cat <<EOF > palette.json
+# Gerar o JSON
+cat <<EOF > settings.json
 {
   "companyName": "$APP_NAME",
   "maxWidth": "70rem",
@@ -59,5 +57,5 @@ cat <<EOF > palette.json
 }
 EOF
 
-echo "Generated palette.json:"
-cat palette.json
+echo "Generated settings.json:"
+cat settings.json
